@@ -18,13 +18,14 @@
  */
 
 window.LISTINGLENS_FIREBASE_CONFIG = {
-  // Firebase web app config — replace every YOUR_* value with your own.
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_PROJECT_ID.firebasestorage.app',
-  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+  // Firebase web app config — values from the user's Firebase console
+  // (web app listinglens-web, registered 2026-11-22).
+  apiKey: 'AIzaSyAVTaeP5wBX20Hm5fxp_MndrUtjior2DLc',
+  authDomain: 'listinglens-hybrid.firebaseapp.com',
+  projectId: 'listinglens-hybrid',
+  storageBucket: 'listinglens-hybrid.firebasestorage.app',
+  messagingSenderId: '267777122044',
+  appId: '1:267777122044:web:64deced9a8a6ed3df08179',
 
   // reCAPTCHA Enterprise site key for Firebase App Check (App Check >
   // your web app > reCAPTCHA Enterprise). Required: App Check is enforced
