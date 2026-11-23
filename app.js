@@ -382,6 +382,41 @@ if (typeof document !== 'undefined') {
     }
   }
 
+  function setInferenceBadge(source, modelName, latencyMs) {
+    const badge = $('path-badge');
+    badge.hidden = false;
+    const lat = (latencyMs != null) ? ' · ' + (latencyMs / 1000).toFixed(1) + 's' : '';
+    if (source === 'on-device') {
+      badge.className = 'path-badge on-device';
+      badge.textContent = '🖥️ On-device · ' + modelName + lat + ' — nothing left this device';
+    } else if (source === 'cloud' || source === 'openai') {
+      badge.className = 'path-badge cloud';
+      badge.textContent = '☁️ Cloud · ' + modelName + lat;
+    } else {
+      badge.className = 'path-badge rules';
+      badge.textContent = '⚙️ ' + modelName + lat;
+    }
+  }
+
+  function updateHybridStatus() {
+    const hybrid = window.ListingLensHybrid;
+    const statusEl = $('hybrid-status');
+    const box = $('in-use-hybrid');
+    if (!hybrid) {
+      statusEl.textContent = 'Hybrid AI module is still loading…';
+      box.disabled = true;
+      return;
+    }
+    const st = hybrid.getStatus();
+    statusEl.textContent = st.message + (st.appCheckState === 'failed' ? ' (App Check init failed — see console.)' : '');
+    if (st.state === 'not-configured') {
+      box.checked = false;
+      box.disabled = true;
+    } else {
+      box.disabled = false;
+    }
+  }
+
   function renderOutput(en, cn, note) {
     $('output-card').hidden = false;
     $('engine-note').textContent = note;
@@ -433,6 +468,17 @@ if (typeof document !== 'undefined') {
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    // Hybrid AI status: the firebase-ai.js module loads as an ES module and
+    // may arrive after this handler runs, so check now and on its ready event.
+    updateHybridStatus();
+    window.addEventListener('listinglens-hybrid-ready', updateHybridStatus);
+    setTimeout(() => {
+      if (!window.ListingLensHybrid) {
+        $('hybrid-status').textContent = 'Hybrid AI module did not load (could not reach the Firebase CDN) — the rules engine is running instead.';
+        $('in-use-hybrid').disabled = true;
+      }
+    }, 5000);
+
     // Restore saved key if the user opted in before.
     try {
       const saved = localStorage.getItem(KEY_STORAGE);
@@ -480,6 +526,22 @@ if (typeof document !== 'undefined') {
         }
         const res = optimizeListing(input);
         let note = 'Optimized with the built-in rules engine (demo mode — no API key used).';
+        // 1) Firebase AI Logic hybrid inference (on-device first, cloud fallback).
+        const hybrid = window.ListingLensHybrid;
+        if ($('in-use-hybrid').checked && hybrid && hybrid.isConfigured()) {
+          try {
+            const ai = await hybrid.optimize(input, res.keywords, { en: res.en, cn: res.cn },
+              (m) => { btn.textContent = m; });
+            const afterAI = scoreListing(ai.en, res.keywords);
+            renderScore({ before: res.before, after: afterAI });
+            renderOutput(ai.en, ai.cn, 'Optimized with Firebase AI Logic hybrid inference.');
+            setInferenceBadge(ai.source, ai.modelName, ai.latencyMs);
+            return;
+          } catch (e) {
+            note = 'Hybrid AI failed (' + (e && e.message ? e.message : 'error') + ') — fell back to the built-in rules engine.';
+          }
+        }
+        // 2) Optional live AI via the user's own OpenAI key.
         if ($('in-use-ai').checked && key) {
           try {
             const aiEn = await optimizeWithLLM(input, key);
@@ -487,13 +549,16 @@ if (typeof document !== 'undefined') {
             const afterAI = scoreListing(aiEn, res.keywords);
             renderScore({ before: res.before, after: afterAI });
             renderOutput(aiEn, aiCn, 'Optimized with live AI (GPT-4o-mini). Chinese version localized by the built-in localizer.');
+            setInferenceBadge('openai', 'GPT-4o-mini (BYOK OpenAI)', null);
             return;
           } catch (e) {
             note = 'Live AI failed (' + (e && e.message ? e.message : 'error') + ') — fell back to the built-in rules engine.';
           }
         }
+        // 3) Built-in rules engine — always works, no key, no network.
         renderScore(res);
         renderOutput(res.en, res.cn, note);
+        setInferenceBadge('rules', 'Rules engine (offline fallback)', null);
       } finally {
         btn.disabled = false;
         btn.textContent = 'Optimize listing →';

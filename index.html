@@ -11,7 +11,7 @@
   <div class="wrap">
     <h1>🔍 ListingLens</h1>
     <p class="tagline">Bilingual Amazon listing optimizer — English + 中文. Built by an e-commerce operator, for sellers.</p>
-    <p class="track">GenHacks 2026 · AI, Agentic Systems, Cybersecurity &amp; Dev Tools track</p>
+    <p class="track">#BuildHybridAI 2026 · Web (Chrome) — Firebase AI Logic hybrid inference: on-device Gemini Nano first, cloud Gemini fallback</p>
   </div>
 </header>
 
@@ -36,6 +36,11 @@
     <div class="actions">
       <button id="btn-sample" type="button" class="btn secondary">Load sample product</button>
       <button id="btn-optimize" type="button" class="btn primary">Optimize listing →</button>
+    </div>
+
+    <div class="hybrid-box">
+      <label class="check"><input type="checkbox" id="in-use-hybrid" checked> Use hybrid AI — on-device first (Gemini Nano in Chrome), cloud fallback (Gemini via Firebase AI Logic)</label>
+      <p class="hint" id="hybrid-status">Checking Firebase AI Logic…</p>
     </div>
 
     <details class="byok">
@@ -75,6 +80,7 @@
 
   <section class="card" id="output-card" hidden>
     <h2>3 · Optimized listing</h2>
+    <p class="path-badge" id="path-badge" hidden></p>
     <p class="hint" id="engine-note"></p>
     <div class="tabs">
       <button type="button" class="tab active" data-lang="en">English</button>
@@ -111,10 +117,12 @@
   </section>
 
   <footer>
-    <p>ListingLens runs entirely in your browser. Demo mode needs no account and no API key. Built for GenHacks 2026.</p>
+    <p>ListingLens runs entirely in your browser. Demo mode needs no account and no API key — the built-in rules engine always works. With a Firebase project configured, the same Optimize button runs Firebase AI Logic hybrid inference: Gemini Nano on your device first, Gemini in the cloud when the device model is unavailable. Built for #BuildHybridAI 2026; the rules engine and bilingual localizer come from the GenHacks 2026 ListingLens project.</p>
   </footer>
 </main>
 
+<script src="firebase-config.js"></script>
+<script type="module" src="firebase-ai.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
